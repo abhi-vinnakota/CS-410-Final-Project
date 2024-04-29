@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Filtered Results</title>
+  </head>
+  <body>
+    <h1>Top Movies for Your Query</h1>
+    <ul>
+      {% for movie in top_movies %}
+      <li>{{ movie.title }} - Score: {{ movie.score }}</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
