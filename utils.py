@@ -4,8 +4,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+from nltk.stem import PorterStemmer
+from gensim.models import Word2Vec
 
-# Plot top 50 words and their respective frequencies
 def calculate_word_frequencies(file_path):
     word_freq = defaultdict(int)
 
@@ -42,7 +43,6 @@ def plot_word_frequencies(word_frequencies, filepath='static/word_frequencies.pn
 Returns a list of words (vocabulary) sorted in descending order of frequency, a dictionary mapping of those words to their frequencies, and a list containing cleaned descriptions for each document.
 """
 def create_vocabulary(dataframe, n_frequent):
-  # Lists of characters/words to remove
   numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
   symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '=', '_', '+', '{', '}', '|', '[', ']', '\\', ':', '"', ';', '\'', '<', '>', '?', ',', '.', '/']
   stop_words = ['a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'for', 'if', 'in', 'into', 'is', 'it', 'no', 'not', 'of', 'on', 'or', 'such', 'that',
@@ -52,15 +52,13 @@ def create_vocabulary(dataframe, n_frequent):
   temp_df = dataframe.copy()
   cleaned_descriptions = []
   for i in range(len(temp_df)):
-    # Set all words to lowercase
+
     temp_df.iloc[i] = temp_df.iloc[i].lower()
 
-    # Remove weird links
     lt_i = temp_df.iloc[i].find('&lt')
     if lt_i != -1:
       temp_df.iloc[i] = temp_df.iloc[i][0:lt_i]
 
-    # Remove numbers and punctuation (symbols)
     for number in numbers:
       if number in temp_df.iloc[i]:
         temp_df.iloc[i] = temp_df.iloc[i].replace(number, ' ')
@@ -68,7 +66,6 @@ def create_vocabulary(dataframe, n_frequent):
       if symbol in temp_df.iloc[i]:
         temp_df.iloc[i] = temp_df.iloc[i].replace(symbol, ' ')
 
-    # Remove whitespace from words and remove stop-words
     split_line = temp_df.iloc[i].split(' ')
     clean_line = []
     for j in range(len(split_line)):
@@ -91,7 +88,8 @@ def create_vocabulary(dataframe, n_frequent):
 
   return top_n_words, sorted_dict, cleaned_descriptions
 
-def process_query(query, cleaned_descr, w2v_model, csv_df):
+def process_query(query, cleaned_descr, w2v_model, csv_df, genre, min_year, max_year, min_rating):
+    
     split_query = query.split(" ")
     scores = []
     for j in range(len(cleaned_descr)):
@@ -103,34 +101,96 @@ def process_query(query, cleaned_descr, w2v_model, csv_df):
                     continue
                 score += w2v_model.wv.similarity(query_word, doc_word)
                 count += 1
-            if count != 0:  # Handle empty documents
+            if count != 0: 
                 score /= count
             overall_score *= score
         scores.append(overall_score)
 
     sorted_indices = np.flip(np.argsort(scores))
-    top_movies = [{"title": csv_df.iloc[index]['Series_Title'], "score": scores[index]} for index in sorted_indices[:10]]
+    filtered_movies = [{"title": csv_df.iloc[index]['Series_Title'],
+                    "poster": csv_df.iloc[index]['Poster_Link'],
+                    "year": int(csv_df.iloc[index]['Released_Year']),
+                    "genre": csv_df.iloc[index]['Genre'],
+                    "imdb": csv_df.iloc[index]["IMDB_Rating"],
+                    "overview": csv_df.iloc[index]["Overview"],
+                    "score": scores[index]}
+                   for index in sorted_indices
+                   if (genre in csv_df.iloc[index]['Genre']) and
+                      (csv_df.iloc[index]['Released_Year'] >= int(min_year)) and
+                      (csv_df.iloc[index]['Released_Year'] <= int(max_year)) and
+                      (float(csv_df.iloc[index]['IMDB_Rating']) >= float(min_rating))]
+
+    top_movies = filtered_movies[:10] if len(filtered_movies) >= 10 else filtered_movies
 
     return top_movies
-  
-def PRM_process_query(query, sorted_vocabulary, filtered_df):
-    query_terms = query.lower().split()
-    movie_scores = []
-    for index, row in filtered_df.iterrows():
-        movie_score = 0
-        for term in query_terms:
-            if term in sorted_vocabulary:
-                term_frequency = row['Overview'].lower().count(term)
-                doc_length = len(row['Overview'].split())
-                avg_doc_length = np.mean([len(doc.split()) for doc in filtered_df['Overview']])
-                collection_frequency = sum([doc.lower().count(term) for doc in filtered_df['Overview']])
-                if collection_frequency == 0:
-                    idf = 0
-                else:
-                    idf = np.log((len(filtered_df) - collection_frequency + 0.5) / (collection_frequency + 0.5))
-                tfidf_score = (1 + np.log(1 + np.log(term_frequency))) * idf
-                movie_score += tfidf_score
-        movie_scores.append((row['Series_Title'], movie_score))
-    movie_scores.sort(key=lambda x: x[1], reverse=True)
-    top_movies = [{'Title': title, 'Score': score} for title, score in movie_scores[:10]]
+
+def process_query_PRM(query, word_dict, inverted_index, csv_df, genre, min_year, max_year, min_rating):
+    vocab_dict = {}
+    for i in range(200):
+        vocab_dict[word_dict[i][0]] = word_dict[i][2]
+    
+    sorted_vocabulary = list(vocab_dict.keys())
+
+    ps = PorterStemmer()
+    stemmed_query = " ".join(ps.stem(word) for word in query.split())
+    
+    query_vector = np.zeros(len(sorted_vocabulary))
+    for word in stemmed_query.split():
+        if word in sorted_vocabulary:
+            query_vector[sorted_vocabulary.index(word)] += 1
+
+    num_rows = len(csv_df)
+    document_vectors = np.zeros((num_rows, len(sorted_vocabulary)))
+    for i in range(len(inverted_index)):
+        if inverted_index[i][0] in sorted_vocabulary:
+            curr_index = sorted_vocabulary.index(inverted_index[i][0])
+            document_vectors[inverted_index[i][1]-1][curr_index] = inverted_index[i][2]
+
+    document_lens = {}
+    inverted_index.sort(key=lambda tup: tup[1])
+    for i in range(len(inverted_index)):
+        if inverted_index[i][1] not in document_lens:
+            document_lens[inverted_index[i][1]] = inverted_index[i][2]
+        else:
+            document_lens[inverted_index[i][1]] += inverted_index[i][2]
+
+    collection_lm = {}
+    total_words = 0
+    for i in range(len(word_dict)):
+        total_words += word_dict[i][2]
+        for i in range(len(word_dict)):
+            collection_lm[word_dict[i][0]] = word_dict[i][2] / total_words
+
+    vocab_lm = np.zeros(len(sorted_vocabulary))
+    for word in collection_lm:
+        if word in sorted_vocabulary:
+            vocab_lm[sorted_vocabulary.index(word)] = collection_lm[word]
+    
+    lambda_val = 0.4
+    scores = []
+    for j in range(len(document_vectors)):
+        second_half = None
+        if document_lens[j+1] != 0:
+            second_half = 1 + ((1-lambda_val)/lambda_val)*(document_vectors[j] / (document_lens[j+1]*vocab_lm))
+        else:
+            second_half = 1 + ((1-lambda_val)/lambda_val)*(document_vectors[j] / (vocab_lm))
+        scores.append(np.dot(query_vector, np.log(second_half)))
+
+    sorted_indices = np.flip(np.argsort(scores))
+
+    filtered_movies = [{"title": csv_df.iloc[index]['Series_Title'],
+                    "poster": csv_df.iloc[index]['Poster_Link'],
+                    "year": int(csv_df.iloc[index]['Released_Year']),
+                    "genre": csv_df.iloc[index]['Genre'],
+                    "imdb": csv_df.iloc[index]["IMDB_Rating"],
+                    "overview": csv_df.iloc[index]["Overview"],
+                    "score": scores[index]}
+                   for index in sorted_indices
+                   if (genre in csv_df.iloc[index]['Genre']) and
+                      (csv_df.iloc[index]['Released_Year'] >= int(min_year)) and
+                      (csv_df.iloc[index]['Released_Year'] <= int(max_year)) and
+                      (float(csv_df.iloc[index]['IMDB_Rating']) >= float(min_rating))]
+
+    top_movies = filtered_movies[:10] if len(filtered_movies) >= 10 else filtered_movies
+    
     return top_movies

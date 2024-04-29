@@ -1,14 +1,35 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Filtered Results</title>
+    <title>Query Results</title>
   </head>
   <body>
     <h1>Top Movies for Your Query</h1>
-    <ul>
+    <table border="1">
+      <tr>
+        <th>Title</th>
+        <th>Year Released</th>
+        <th>Genre</th>
+        <th>IMDB Rating</th>
+        <th>Overview</th>
+        <th>Poster</th>
+      </tr>
       {% for movie in top_movies %}
-      <li>{{ movie.title }} - Score: {{ movie.score }}</li>
+      <tr>
+        <td>{{ movie.title }}</td>
+        <td>{{ movie.year }}</td>
+        <td>{{ movie.genre }}</td>
+        <td>{{ movie.imdb }}</td>
+        <td>{{ movie.overview }}</td>
+        <td>
+          <img
+            src="{{ movie.poster }}"
+            alt="{{ movie.title }} Poster"
+            width="100%"
+          />
+        </td>
+      </tr>
       {% endfor %}
-    </ul>
+    </table>
   </body>
 </html>
