@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PRM Results</title>
+  </head>
+  <body>
+    <h1>Top Movies for Your Query (PRM)</h1>
+    <ul>
+      {% for movie in top_movies %}
+      <li>{{ movie.Title }} - Score: {{ movie.Score }}</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

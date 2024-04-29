@@ -84,7 +84,6 @@ def movie_query_with_filters_prm():
         min_year = int(request.form.get('min_year', 0))
         max_year = int(request.form.get('max_year', 3000))
         min_rating = float(request.form.get('min_rating', 0))
-        # Filtering based on input
         filtered_df = csv_df[
             (csv_df['Genre'].str.contains(genre)) &
             (csv_df['Released_Year'] >= min_year) &
@@ -92,7 +91,7 @@ def movie_query_with_filters_prm():
             (csv_df['IMDB_Rating'] >= min_rating)
         ]
         top_movies = PRM_process_query(query, sorted_vocabulary, filtered_df)
-        return render_template('results.html', top_movies=top_movies)
+        return render_template('prm_results.html', top_movies=top_movies)
     return render_template('index.html')
 
 if __name__ == '__main__':

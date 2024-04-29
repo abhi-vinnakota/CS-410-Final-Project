@@ -9,17 +9,23 @@
       <button type="submit">Plot Frequencies</button>
     </form>
 
-    <!-- <h1>Filter Movies</h1>
+    <h1>Filter Movies</h1>
     <form action="/" method="post">
       Genre: <input type="text" name="genre" /><br />
       Minimum Year: <input type="number" name="min_year" /><br />
       Maximum Year: <input type="number" name="max_year" /><br />
       Minimum Rating: <input type="number" step="0.1" name="min_rating" /><br />
       <input type="submit" value="Submit" />
-    </form> -->
+    </form>
 
     <h1>Enter your movie query</h1>
     <form action="/movie-query" method="post">
+      Query: <input type="text" name="query" />
+      <input type="submit" value="Search" />
+    </form>
+
+    <h1>Enter your movie query for PRM</h1>
+    <form action="/movie-query-with-filters-prm" method="post">
       Query: <input type="text" name="query" />
       <input type="submit" value="Search" />
     </form>

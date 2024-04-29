@@ -120,13 +120,16 @@ def PRM_process_query(query, sorted_vocabulary, filtered_df):
         movie_score = 0
         for term in query_terms:
             if term in sorted_vocabulary:
-                term_index = sorted_vocabulary.index(term)
                 term_frequency = row['Overview'].lower().count(term)
                 doc_length = len(row['Overview'].split())
                 avg_doc_length = np.mean([len(doc.split()) for doc in filtered_df['Overview']])
                 collection_frequency = sum([doc.lower().count(term) for doc in filtered_df['Overview']])
-                prm_score = (1 + np.log(1 + np.log(term_frequency))) / ((1 - 0.5) + 0.5 * (doc_length / avg_doc_length)) * np.log((len(filtered_df) - collection_frequency + 0.5) / (collection_frequency + 0.5))
-                movie_score += prm_score
+                if collection_frequency == 0:
+                    idf = 0
+                else:
+                    idf = np.log((len(filtered_df) - collection_frequency + 0.5) / (collection_frequency + 0.5))
+                tfidf_score = (1 + np.log(1 + np.log(term_frequency))) * idf
+                movie_score += tfidf_score
         movie_scores.append((row['Series_Title'], movie_score))
     movie_scores.sort(key=lambda x: x[1], reverse=True)
     top_movies = [{'Title': title, 'Score': score} for title, score in movie_scores[:10]]
