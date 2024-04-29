@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 import pandas as pd
 import numpy as np
 from gensim.models import Word2Vec
-from utils import calculate_word_frequencies, plot_word_frequencies, create_vocabulary, process_query
+from utils import calculate_word_frequencies, plot_word_frequencies, create_vocabulary, process_query, PRM_process_query
 import sys
 
 app = Flask(__name__)
@@ -73,6 +73,25 @@ def movie_query_with_filters():
             (csv_df['IMDB_Rating'] >= min_rating)
         ]
         top_movies = process_query(query, cleaned_descr, w2v_model, filtered_df)
+        return render_template('results.html', top_movies=top_movies)
+    return render_template('index.html')
+
+@app.route('/movie-query-with-filters-prm', methods=['GET', 'POST'])
+def movie_query_with_filters_prm():
+    if request.method == 'POST':
+        query = request.form['query']
+        genre = request.form.get('genre', '')
+        min_year = int(request.form.get('min_year', 0))
+        max_year = int(request.form.get('max_year', 3000))
+        min_rating = float(request.form.get('min_rating', 0))
+        # Filtering based on input
+        filtered_df = csv_df[
+            (csv_df['Genre'].str.contains(genre)) &
+            (csv_df['Released_Year'] >= min_year) &
+            (csv_df['Released_Year'] <= max_year) &
+            (csv_df['IMDB_Rating'] >= min_rating)
+        ]
+        top_movies = PRM_process_query(query, sorted_vocabulary, filtered_df)
         return render_template('results.html', top_movies=top_movies)
     return render_template('index.html')
 
