@@ -11,7 +11,31 @@
 
     <h1>Enter your movie query for Word2Vec</h1>
     <form action="/movie-query" method="post">
-      Genre: <input type="text" name="genre" /><br />
+      <label for="genre">Genre:</label>
+      <select name="genre" id="genre">
+        <option value="">Select Genre</option>
+        <option value="Action">Action</option>
+        <option value="Adventure">Adventure</option>
+        <option value="Comedy">Comedy</option>
+        <option value="Drama">Drama</option>
+        <option value="Mystery">Mystery</option>
+        <option value="Thriller">Thriller</option>
+        <option value="Crime">Crime</option>
+        <option value="War">War</option>
+        <option value="Fantasy">Fantasy</option>
+        <option value="Music">Music</option>
+        <option value="Family">Family</option>
+        <option value="Romance">Romance</option>
+        <option value="Sci-Fi">Sci-Fi</option>
+        <option value="Biography">Biography</option>
+        <option value="History">History</option>
+        <option value="Film-Noir">Film-Noir</option>
+        <option value="Animation">Animation</option>
+        <option value="Western">Western</option>
+        <option value="Musical">Musical</option>
+        <option value="Sport">Sport</option>
+      </select>
+      <br />
       Minimum Year: <input type="number" name="min_year" /><br />
       Maximum Year: <input type="number" name="max_year" /><br />
       Minimum Rating: <input type="number" step="0.1" name="min_rating" /><br />
@@ -21,7 +45,31 @@
 
     <h1>Enter your movie query for PRM</h1>
     <form action="/movie-query-prm" method="post">
-      Genre: <input type="text" name="genre" /><br />
+      <label for="genre">Genre:</label>
+      <select name="genre" id="genre">
+        <option value="">Select Genre</option>
+        <option value="Action">Action</option>
+        <option value="Adventure">Adventure</option>
+        <option value="Comedy">Comedy</option>
+        <option value="Drama">Drama</option>
+        <option value="Mystery">Mystery</option>
+        <option value="Thriller">Thriller</option>
+        <option value="Crime">Crime</option>
+        <option value="War">War</option>
+        <option value="Fantasy">Fantasy</option>
+        <option value="Music">Music</option>
+        <option value="Family">Family</option>
+        <option value="Romance">Romance</option>
+        <option value="Sci-Fi">Sci-Fi</option>
+        <option value="Biography">Biography</option>
+        <option value="History">History</option>
+        <option value="Film-Noir">Film-Noir</option>
+        <option value="Animation">Animation</option>
+        <option value="Western">Western</option>
+        <option value="Musical">Musical</option>
+        <option value="Sport">Sport</option>
+      </select>
+      <br />
       Minimum Year: <input type="number" name="min_year" /><br />
       Maximum Year: <input type="number" name="max_year" /><br />
       Minimum Rating: <input type="number" step="0.1" name="min_rating" /><br />
